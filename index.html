@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <meta name="description" content="Temple Run: Golden Chasm - A thrilling 3D endless runner game set in an ancient golden temple. Jump, slide, dodge obstacles, and collect ancient gold relics.">
+  <title>Temple Run: Golden Chasm | 3D Endless Runner</title>
+  
+  <!-- Google Fonts: Cinzel for ancient gold luxury titles, Outfit for sleek modern HUD -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Three.js from Cloudflare CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- Canvas Container -->
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Speed Lines Effect Overlay -->
+    <div id="speed-fx" class="speed-fx"></div>
+
+    <!-- Vignette & Ambient Glow Overlay -->
+    <div class="vignette-overlay"></div>
+
+    <!-- Heads-Up Display (HUD) -->
+    <header id="hud" class="hud-container hidden">
+      <!-- Top Left: Distance & Multiplier -->
+      <div class="hud-group hud-left">
+        <div class="hud-metric">
+          <span class="hud-label">DISTANCE</span>
+          <span class="hud-value" id="hud-distance">0<small>m</small></span>
+        </div>
+        <div class="hud-badge" id="hud-multiplier-badge">
+          <span class="mult-icon">✦</span>
+          <span id="hud-multiplier">1.0x</span>
+        </div>
+      </div>
+
+      <!-- Top Center: Active Power-up Status -->
+      <div class="hud-center">
+        <div id="active-powerup-bar" class="powerup-bar hidden">
+          <div class="powerup-icon-wrapper">
+            <span id="powerup-icon">🧲</span>
+          </div>
+          <div class="powerup-info">
+            <span id="powerup-name">MAGNET</span>
+            <div class="powerup-progress-bg">
+              <div id="powerup-progress-fill" class="powerup-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Right: Score & Coins -->
+      <div class="hud-group hud-right">
+        <div class="hud-metric hud-metric-gold">
+          <span class="hud-label">SCORE</span>
+          <span class="hud-value" id="hud-score">000000</span>
+        </div>
+        <div class="hud-coin-pill">
+          <div class="gold-coin-symbol"></div>
+          <span class="hud-coin-value" id="hud-coins">0</span>
+        </div>
+        <button id="btn-pause" class="icon-btn" aria-label="Pause Game" title="Pause (ESC/P)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16" rx="1.5"></rect>
+            <rect x="14" y="4" width="4" height="16" rx="1.5"></rect>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Start / Title Screen -->
+    <div id="screen-start" class="game-overlay active">
+      <div class="modal-card">
+        <div class="temple-emblem">
+          <div class="emblem-outer-ring"></div>
+          <div class="emblem-inner-ring"></div>
+          <div class="emblem-gem"></div>
+        </div>
+
+        <h1 class="game-title">
+          <span class="title-sub">THE ANCIENT EXPEDITION</span>
+          <span class="title-main">TEMPLE RUN</span>
+          <span class="title-sub gold-gradient-text">GOLDEN CHASM</span>
+        </h1>
+
+        <p class="flavor-text">
+          Flee the crumbling obsidian sanctuary before the ancient temple claims your soul.
+        </p>
+
+        <!-- Quick Best Score Highlight -->
+        <div class="best-score-badge">
+          <span>ANCIENT RECORD</span>
+          <strong id="start-high-score">0</strong>
+        </div>
+
+        <!-- Controls Guide -->
+        <div class="controls-guide">
+          <div class="control-col">
+            <div class="key-pill-group">
+              <span class="key-pill">A</span>
+              <span class="key-pill">D</span>
+              <span class="key-sub">or ← →</span>
+            </div>
+            <span class="control-label">Shift Lanes</span>
+          </div>
+          <div class="control-col">
+            <div class="key-pill-group">
+              <span class="key-pill">W</span>
+              <span class="key-sub">or ↑ / Space</span>
+            </div>
+            <span class="control-label">Leap Over</span>
+          </div>
+          <div class="control-col">
+            <div class="key-pill-group">
+              <span class="key-pill">S</span>
+              <span class="key-sub">or ↓</span>
+            </div>
+            <span class="control-label">Slide Under</span>
+          </div>
+        </div>
+
+        <div class="button-stack">
+          <button id="btn-play" class="gold-cta-btn">
+            <span class="cta-shine"></span>
+            <span class="cta-text">ENTER THE SANCTUM</span>
+          </button>
+          <div class="extra-actions">
+            <button id="btn-toggle-sound" class="text-link-btn">
+              <span id="sound-status-icon">🔊</span> Sound: <span id="sound-status-label">ON</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mobile-hint">
+          <span>Swipe or tap controls supported on mobile / touchpads</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="screen-pause" class="game-overlay hidden">
+      <div class="modal-card modal-card-sm">
+        <h2 class="section-title">EXPEDITION PAUSED</h2>
+        <p class="flavor-text">Take a breath, runner. The ancient chasm awaits.</p>
+        
+        <div class="button-stack">
+          <button id="btn-resume" class="gold-cta-btn">
+            <span class="cta-text">RESUME RUN</span>
+          </button>
+          <button id="btn-restart-pause" class="secondary-btn">
+            <span>RESTART</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="screen-gameover" class="game-overlay hidden">
+      <div class="modal-card">
+        <div class="gameover-crest">
+          <div class="skull-glow"></div>
+          <span class="crest-icon">☠</span>
+        </div>
+
+        <h2 class="game-title">
+          <span class="title-sub" id="death-cause-text">OVERCOME BY ANCIENT TRAPS</span>
+          <span class="title-main text-danger">CHASM CLAIMED</span>
+        </h2>
+
+        <!-- Score Breakdown Grid -->
+        <div class="stats-summary-grid">
+          <div class="stat-box main-stat">
+            <span class="stat-label">FINAL SCORE</span>
+            <span class="stat-number gold-gradient-text" id="final-score">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">HIGH SCORE</span>
+            <div class="stat-number-row">
+              <span class="stat-number" id="final-high-score">0</span>
+              <span id="new-high-score-tag" class="new-tag hidden">NEW RECORD!</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">DISTANCE</span>
+            <span class="stat-number" id="final-distance">0 m</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">COINS ACQUIRED</span>
+            <span class="stat-number" id="final-coins">0</span>
+          </div>
+        </div>
+
+        <div class="button-stack">
+          <button id="btn-restart" class="gold-cta-btn">
+            <span class="cta-shine"></span>
+            <span class="cta-text">RUN AGAIN</span>
+          </button>
+          <button id="btn-menu" class="secondary-btn">
+            <span>MAIN SANCTUM</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- On-screen Touch Controls (Visible on mobile/small touch screens) -->
+    <div id="touch-controls" class="touch-controls-container">
+      <div class="touch-row">
+        <button id="touch-up" class="touch-btn" aria-label="Jump">▲<span class="touch-hint">JUMP</span></button>
+      </div>
+      <div class="touch-row touch-middle">
+        <button id="touch-left" class="touch-btn" aria-label="Left">◀<span class="touch-hint">LEFT</span></button>
+        <button id="touch-down" class="touch-btn" aria-label="Slide">▼<span class="touch-hint">SLIDE</span></button>
+        <button id="touch-right" class="touch-btn" aria-label="Right">▶<span class="touch-hint">RIGHT</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/track.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
